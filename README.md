@@ -1,14 +1,14 @@
 ## Access an Array with Solidity
 
-I came accross the issue to access an array with solidity. I hope it will help some people new to solidity.
+I came across some difficulties to access an array with solidity. I hope it will help some people new to solidity.
 
 ### A way to manipulate array with solidity
 
 #### Challenge
 
-Solidity in this version can't return an array.
+Solidity in this version can't return an array (of string, uint or address payable).
 
- One way to get them is call a function that return one value at a time. For instance: this algorithm will ask solidity the length of the array and then run a loop to get all data belonging to the array.
+One way to get them is call a function that return one value at a time. For instance: this algorithm will ask solidity the length of the array (we want the content of) and then run a loop to get all data, one by one, belonging to this array.
 
 #### Explanations
 
