@@ -1,14 +1,14 @@
-import React ,  { Component } from 'react';
+import React from 'react';
 import './App.css';
 import DisplayItems from './DisplayItems';
 import Web3 from 'web3';
 import accessArray from '../abis/AccessArray.json';
 
 class App extends React.Component {
-async componentWillMount() {
-  await this.loadWeb3()
-  await this.loadBlockchainData()
-}
+  async componentWillMount() {
+      await this.loadWeb3()
+      await this.loadBlockchainData()
+  }
 
 async loadWeb3() {
   if (window.ethereum) {
@@ -36,6 +36,12 @@ async loadBlockchainData() {
     this.setState({ AccessArray })
     const numberItems = await AccessArray.methods.numberItems().call({ from: this.props.account})
     const items = []
+    let directMethodAccounts = [];
+    let EXPitems = [];
+    console.log('Getting data from solidity ...')
+    EXPitems = await AccessArray.methods.getItems ().call({ from: this.props.account});
+    console.log ('Returning the item from struct Item only possible with  pragma experimental', EXPitems)
+
     for (var inc = 0; inc<numberItems; inc++){
       //getting the number of account for this items (key = inc)
       const accountNumber = await AccessArray.methods.getNumberItemAccounts(inc).call({ from: this.props.account})
@@ -46,11 +52,16 @@ async loadBlockchainData() {
         //getting the mapping function without the array
         const itemsNotFormated = await AccessArray.methods.items(inc).call({ from: this.props.account})
         //reformating the array
+        console.log('Getting the accounts for each items')
+        directMethodAccounts.push(await AccessArray.methods.getAccounts (inc).call({ from: this.props.account}));
+        console.log ('ABIString', directMethodAccounts)
+
+        
       items.push( {id:itemsNotFormated.id, name:itemsNotFormated.name, accounts})
       }
       this.setState({ loading: false, items})
       
-    console.log(this.state.items)
+    console.log('state Items',this.state.items)
   } else {
     window.alert('File Exchange contract not deployed to detected network.')
   }
@@ -61,20 +72,30 @@ constructor(props) {
   this.state = {
       items: []
     }
+    
 }
 
   render() {
     return (
       <div className="App">
-        <h1>A way to manipulate array with solidity
+        <h1>Ways to manipulate structured data with solidity
         </h1>
         <h2>Challenge</h2>
-        <p>Solidity in this version can't return an array.</p>
-        <p>One way to get them is call a function that return one value at a time. For instance: this algorithm will ask solidity the length of the array and then run a loop to get all data belonging to the array.</p>
+        <p>Get some structured data from solidity is not always straightforward</p>
+        <p>depending the version of solidity that you are using, you could investigate different strategy</p>
         <h2>Explanations</h2>
-        <p>The data are stored in a type map variable : <code>mapping (uint => Item) public items;</code>. The data structure Item hold the account address we would like to display <code>address payable[] accounts;</code> </p>
+        <h3>Old version (< 0.5.0)</h3>
+        <p>Returning an array of standard type of data was not supported. </p>
+        <p>The developper could call 2 functions : the first one will give the size of the array and the second one will return a value from the array</p>
+        <p>In this code the structure Item used in <code>mapping (uint => Item) public items;</code> hold the account addresses we would like to display <code>address payable[] accounts;</code> </p>
         <p>2 functions are accessible from REACT through web3 to access the array length and the account address individually <code>function getNumberItemAccounts (uint index) public returns (uint) </code> and <code>function getItemAccount(uint itemIndex, uint accountIndex) public returns (address payable)</code>. They both return a single variable.</p>
-        <p>The frontend recreates the data structure and displays it</p>
+        <h3>In newer version (< 0.5.0)</h3>
+        <p>Solidity enable to return an array of standard type of data e.g. (unint[], string[])</p>
+        <p>A simple function such as <code>function getAccounts(uint itemIndex) public returns (address payable[] memory)</code> will do the job</p>
+    <p>However return an array of structure data is still impossible</p>
+
+        <h3>Experimental pragma</h3>
+        <p>Adding to the code <code>pragma experimental ABIEncoderV2;</code> will allow to do so. you can check function <code>getItems()</code>. However, it is not recommanded to use experimental code in live version</p>
         <h2>Results read from solidity</h2>
         <p>The following results are read from a variable in solidity and display on a webpage</p>
         <DisplayItems items={this.state.items} />
