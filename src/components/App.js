@@ -1,14 +1,14 @@
-import React ,  { Component } from 'react';
+import React from 'react';
 import './App.css';
 import DisplayItems from './DisplayItems';
 import Web3 from 'web3';
 import accessArray from '../abis/AccessArray.json';
 
 class App extends React.Component {
-async componentWillMount() {
-  await this.loadWeb3()
-  await this.loadBlockchainData()
-}
+  async componentWillMount() {
+      await this.loadWeb3()
+      await this.loadBlockchainData()
+  }
 
 async loadWeb3() {
   if (window.ethereum) {
@@ -36,6 +36,12 @@ async loadBlockchainData() {
     this.setState({ AccessArray })
     const numberItems = await AccessArray.methods.numberItems().call({ from: this.props.account})
     const items = []
+    let directMethodAccounts = [];
+    let EXPitems = [];
+    console.log('Getting data from solidity ...')
+    EXPitems = await AccessArray.methods.getItems ().call({ from: this.props.account});
+    console.log ('Returning the item from struct Item only possible with  pragma experimental', EXPitems)
+
     for (var inc = 0; inc<numberItems; inc++){
       //getting the number of account for this items (key = inc)
       const accountNumber = await AccessArray.methods.getNumberItemAccounts(inc).call({ from: this.props.account})
@@ -46,11 +52,16 @@ async loadBlockchainData() {
         //getting the mapping function without the array
         const itemsNotFormated = await AccessArray.methods.items(inc).call({ from: this.props.account})
         //reformating the array
+        console.log('Getting the accounts for each items')
+        directMethodAccounts.push(await AccessArray.methods.getAccounts (inc).call({ from: this.props.account}));
+        console.log ('ABIString', directMethodAccounts)
+
+        
       items.push( {id:itemsNotFormated.id, name:itemsNotFormated.name, accounts})
       }
       this.setState({ loading: false, items})
       
-    console.log(this.state.items)
+    console.log('state Items',this.state.items)
   } else {
     window.alert('File Exchange contract not deployed to detected network.')
   }
@@ -61,6 +72,7 @@ constructor(props) {
   this.state = {
       items: []
     }
+    
 }
 
   render() {
